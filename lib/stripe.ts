@@ -34,7 +34,9 @@ export async function createCheckoutSession(priceId: string, userId: string, use
     success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?success=true`,
     cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/parametres`,
     metadata: { userId },
-    trial_period_days: 14,
+    subscription_data: {
+      trial_period_days: 14,
+    },
   });
   return session;
 }
