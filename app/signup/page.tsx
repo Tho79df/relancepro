@@ -49,8 +49,8 @@ export default function SignupPage() {
           <p style={{ color: 'var(--text-secondary)', marginBottom: 32, fontSize: 15 }}>
             Votre compte est créé. Vérifiez votre email pour confirmer votre adresse, puis accédez à votre tableau de bord.
           </p>
-          <Link href={email === 'lootthomas2@gmail.com' ? "/dashboard" : "/paywall"} className="btn btn-primary btn-lg">
-            {email === 'lootthomas2@gmail.com' ? "Accéder au tableau de bord →" : "Démarrer mon essai gratuit →"}
+          <Link href={formData.email === 'lootthomas2@gmail.com' ? "/dashboard" : "/paywall"} className="btn btn-primary btn-lg">
+            {formData.email === 'lootthomas2@gmail.com' ? "Accéder au tableau de bord →" : "Démarrer mon essai gratuit →"}
           </Link>
         </div>
       </div>
