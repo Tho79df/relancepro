@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase-client';
+import { usePlan } from '@/lib/use-plan';
+import Link from 'next/link';
 
 const DEFAULT_TEMPLATES = [
   {
@@ -39,6 +41,7 @@ export default function RelancesPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
+  const { maxRelanceLevels, plan, loading: planLoading } = usePlan();
   
   const [config, setConfig] = useState(DEFAULT_TEMPLATES.map(t => ({ ...t })));
 
@@ -123,27 +126,30 @@ export default function RelancesPage() {
         
         {/* Navigation des niveaux (Sidebar) */}
         <div style={{ width: 280, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {config.map((t, index) => (
+          {config.map((t, index) => {
+            const isLocked = maxRelanceLevels > 0 && t.level > maxRelanceLevels;
+            return (
             <button
               key={t.level}
-              onClick={() => setActiveTab(t.level)}
+              onClick={() => !isLocked && setActiveTab(t.level)}
               style={{
                 display: 'flex', flexDirection: 'column', alignItems: 'flex-start',
                 padding: '16px 20px', borderRadius: 12, border: '1px solid',
-                borderColor: activeTab === t.level ? '#6366f1' : 'transparent',
-                background: activeTab === t.level ? 'rgba(99,102,241,0.05)' : 'var(--bg-card)',
-                color: activeTab === t.level ? '#6366f1' : 'var(--text-primary)',
-                cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s',
-                boxShadow: activeTab === t.level ? '0 4px 12px rgba(99,102,241,0.1)' : '0 2px 8px rgba(0,0,0,0.02)'
+                borderColor: isLocked ? 'rgba(239,68,68,0.2)' : activeTab === t.level ? '#6366f1' : 'transparent',
+                background: isLocked ? 'rgba(239,68,68,0.04)' : activeTab === t.level ? 'rgba(99,102,241,0.05)' : 'var(--bg-card)',
+                color: isLocked ? '#ef4444' : activeTab === t.level ? '#6366f1' : 'var(--text-primary)',
+                cursor: isLocked ? 'not-allowed' : 'pointer', textAlign: 'left', transition: 'all 0.2s',
+                opacity: isLocked ? 0.6 : 1,
               }}
             >
-              <div style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: activeTab === t.level ? '#818cf8' : 'var(--text-muted)', marginBottom: 4 }}>
-                Niveau {t.level}
+              <div style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: isLocked ? '#ef4444' : activeTab === t.level ? '#818cf8' : 'var(--text-muted)', marginBottom: 4 }}>
+                {isLocked ? '🔒 PLAN PRO' : `Niveau ${t.level}`}
               </div>
               <div style={{ fontSize: 15, fontWeight: 800, marginBottom: 4 }}>{t.name}</div>
-              <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Envoyé à J+{t.delay}</div>
+              <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{isLocked ? 'Non disponible sur Starter' : `Envoyé à J+${t.delay}`}</div>
             </button>
-          ))}
+            );
+          })}
           
           <div style={{ marginTop: 24, padding: 20, background: 'rgba(16,185,129,0.05)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: 12 }}>
             <div style={{ fontSize: 13, fontWeight: 700, color: '#10b981', marginBottom: 8 }}>Variables disponibles</div>
@@ -153,6 +159,15 @@ export default function RelancesPage() {
               <li><code>{'{{due_date}}'}</code></li>
             </ul>
           </div>
+
+          {/* Upgrade CTA for Starter */}
+          {plan === 'starter' && (
+            <div style={{ marginTop: 12, padding: 20, background: 'rgba(99,102,241,0.05)', border: '1px solid rgba(99,102,241,0.2)', borderRadius: 12 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: '#818cf8', marginBottom: 6 }}>🚀 Passez au plan Pro</div>
+              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 12 }}>Déverrouillez le niveau 4 (Mise en demeure) et les factures illimitées.</div>
+              <Link href="/dashboard/parametres" style={{ fontSize: 12, fontWeight: 700, color: '#6366f1', textDecoration: 'none' }}>Voir les plans →</Link>
+            </div>
+          )}
         </div>
 
         {/* Éditeur (Main content) */}

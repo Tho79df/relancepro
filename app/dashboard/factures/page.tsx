@@ -1,12 +1,14 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase-client';
+import { usePlan } from '@/lib/use-plan';
 import Link from 'next/link';
 
 export default function FacturesPage() {
   const [invoices, setInvoices] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'overdue' | 'pending' | 'paid'>('all');
+  const { plan, maxInvoices, loading: planLoading } = usePlan();
   
   // Relance modal state
   const [relanceModal, setRelanceModal] = useState<{ show: boolean, invoiceId: string, currentLevel: number } | null>(null);
@@ -78,8 +80,37 @@ export default function FacturesPage() {
           <h1 style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.02em' }}>Mes factures</h1>
           <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 2 }}>{invoices.length} facture(s) · {invoices.filter(i => i.status === 'overdue').length} en retard</p>
         </div>
-        <Link href="/dashboard/factures/nouvelle" className="btn btn-primary btn-sm" id="btn-add-invoice" style={{ textDecoration: 'none' }}>+ Nouvelle facture</Link>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          {maxInvoices > 0 && (
+            <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>
+              {invoices.length}/{maxInvoices} factures utilisées
+            </span>
+          )}
+          {maxInvoices === -1 && (
+            <span style={{ fontSize: 13, color: 'var(--success)' }}>∞ Illimitées</span>
+          )}
+          {(maxInvoices === -1 || invoices.length < maxInvoices) ? (
+            <Link href="/dashboard/factures/nouvelle" className="btn btn-primary btn-sm" id="btn-add-invoice" style={{ textDecoration: 'none' }}>+ Nouvelle facture</Link>
+          ) : (
+            <button
+              disabled
+              title={`Limite atteinte pour le plan ${plan}. Passez au plan Pro pour des factures illimitées.`}
+              style={{ padding: '8px 16px', borderRadius: 10, background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#ef4444', fontSize: 13, fontWeight: 600, cursor: 'not-allowed' }}
+            >
+              🔒 Limite atteinte ({maxInvoices}/{maxInvoices})
+            </button>
+          )}
+        </div>
       </div>
+
+      {/* Plan limit warning banner */}
+      {maxInvoices > 0 && invoices.length >= maxInvoices - 1 && invoices.length < maxInvoices && (
+        <div style={{ background: 'rgba(245,158,11,0.08)', borderBottom: '1px solid rgba(245,158,11,0.2)', padding: '10px 32px', display: 'flex', alignItems: 'center', gap: 10, fontSize: 13 }}>
+          <span>⚠️</span>
+          <span style={{ color: '#f59e0b', fontWeight: 600 }}>Plus qu'une facture disponible sur votre plan {plan}.</span>
+          <Link href="/dashboard/parametres" style={{ color: '#818cf8', fontWeight: 700, textDecoration: 'none', marginLeft: 4 }}>Passer au plan Pro →</Link>
+        </div>
+      )}
 
       <div className="page-content">
         {/* Filter tabs */}

@@ -1,8 +1,25 @@
 'use client';
 import { useState } from 'react';
 import Link from 'next/link';
+import { usePlan } from '@/lib/use-plan';
+
+const PLAN_LABELS: Record<string, { label: string; color: string; bg: string }> = {
+  starter: { label: 'Plan Starter', color: '#f59e0b', bg: 'rgba(245,158,11,0.15)' },
+  pro: { label: 'Plan Pro', color: '#818cf8', bg: 'rgba(99,102,241,0.15)' },
+  studio: { label: 'Plan Studio', color: '#a855f7', bg: 'rgba(168,85,247,0.15)' },
+  none: { label: 'Aucun plan actif', color: '#ef4444', bg: 'rgba(239,68,68,0.1)' },
+};
+
+const STATUS_LABELS: Record<string, string> = {
+  active: 'Actif',
+  trialing: 'Essai gratuit',
+  past_due: 'Paiement en retard',
+  canceled: 'Annulé',
+  none: 'Inactif',
+};
 
 export default function ParametresPage() {
+  const { plan, subscriptionStatus, maxInvoices, maxRelanceLevels, loading: planLoading } = usePlan();
   const [profile, setProfile] = useState({
     name: 'Marie Dupont',
     email: 'marie@exemple.fr',
@@ -12,8 +29,15 @@ export default function ParametresPage() {
   });
 
   const [saved, setSaved] = useState(false);
-  const handlePortal = () => {
-    alert("Le portail client Stripe sera bientôt disponible pour gérer votre abonnement.");
+  const handlePortal = async () => {
+    try {
+      const res = await fetch('/api/stripe/portal', { method: 'POST' });
+      const data = await res.json();
+      if (data.url) window.location.href = data.url;
+      else alert('Impossible d\'ouvrir le portail. Veuillez réessayer.');
+    } catch {
+      alert('Erreur réseau. Veuillez réessayer.');
+    }
   };
 
   const handleSave = (e: React.FormEvent) => {
@@ -69,13 +93,37 @@ export default function ParametresPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <div className="card" style={{ padding: 28, background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.2)' }}>
               <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>Mon abonnement</h2>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-                <div className="badge badge-info" style={{ fontSize: 14, padding: '6px 14px' }}>Plan Pro</div>
-                <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>Essai gratuit</span>
-              </div>
-              <div style={{ display: 'flex', gap: 12 }}>
-                <button onClick={handlePortal} className="btn btn-secondary btn-sm" id="btn-change-plan">Gérer mon abonnement</button>
-              </div>
+              {planLoading ? (
+                <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Chargement...</div>
+              ) : (
+                <>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16, flexWrap: 'wrap' }}>
+                    <span style={{
+                      padding: '5px 14px', borderRadius: 100, fontSize: 13, fontWeight: 700,
+                      background: PLAN_LABELS[plan]?.bg,
+                      color: PLAN_LABELS[plan]?.color,
+                    }}>
+                      {PLAN_LABELS[plan]?.label || 'Inconnu'}
+                    </span>
+                    <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>
+                      {STATUS_LABELS[subscriptionStatus] || subscriptionStatus}
+                    </span>
+                  </div>
+                  <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 16, lineHeight: 1.7 }}>
+                    📎 Factures : <strong>{maxInvoices === -1 ? 'Illimitées' : `${maxInvoices} max`}</strong>
+                    <br />
+                    📧 Niveaux de relance : <strong>{maxRelanceLevels === 0 ? 'Aucun' : `${maxRelanceLevels} niveaux`}</strong>
+                  </div>
+                  <div style={{ display: 'flex', gap: 12 }}>
+                    <button onClick={handlePortal} className="btn btn-secondary btn-sm" id="btn-change-plan">Gérer mon abonnement (Stripe)</button>
+                  </div>
+                  {plan === 'starter' && (
+                    <div style={{ marginTop: 16, padding: '10px 14px', background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.2)', borderRadius: 10, fontSize: 13 }}>
+                      🚀 <strong style={{ color: '#818cf8' }}>Passez au Pro (19€/mois)</strong> pour des factures illimitées + la mise en demeure PDF.
+                    </div>
+                  )}
+                </>
+              )}
             </div>
 
             <div className="card" style={{ padding: 28 }}>
