@@ -2,7 +2,7 @@ import { MetadataRoute } from 'next';
 import { blogPosts } from '@/lib/blog-posts';
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = 'https://relancepro.fr';
+  const baseUrl = 'relancepro-one.vercel.app';
   const now = new Date();
 
   const staticPages: MetadataRoute.Sitemap = [
