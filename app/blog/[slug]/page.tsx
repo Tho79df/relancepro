@@ -4,6 +4,8 @@ import Navbar from '@/components/landing/Navbar';
 import Footer from '@/components/landing/Footer';
 import { blogPosts, getPostBySlug } from '@/lib/blog-posts';
 import type { Metadata } from 'next';
+import { SITE_URL } from '@/lib/metadata';
+import { JsonLd } from '@/components/JsonLd';
 
 export async function generateStaticParams() {
   return blogPosts.map((p) => ({ slug: p.slug }));
@@ -17,17 +19,28 @@ export async function generateMetadata({
   const { slug } = await params;
   const post = getPostBySlug(slug);
   if (!post) return {};
+
+  const ogImage = `${SITE_URL}/api/og?title=${encodeURIComponent(post.title)}&category=${encodeURIComponent(post.category)}`;
+
   return {
-    title: `${post.title} | Blog RelancePro`,
+    // NB: le template '%s | RelancePro' est appliqué automatiquement — pas de doublon
+    title: post.title,
     description: post.description,
-    keywords: post.keywords.join(', '),
-    alternates: { canonical: `https://relancepro.fr/blog/${post.slug}` },
+    keywords: post.keywords,
+    alternates: { canonical: `${SITE_URL}/blog/${post.slug}` },
     openGraph: {
       title: post.title,
       description: post.description,
       type: 'article',
-      url: `https://relancepro.fr/blog/${post.slug}`,
+      url: `${SITE_URL}/blog/${post.slug}`,
       publishedTime: new Date().toISOString(),
+      images: [{ url: ogImage, width: 1200, height: 630, alt: post.title }],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: post.title,
+      description: post.description,
+      images: [ogImage],
     },
   };
 }
@@ -78,23 +91,45 @@ export default async function BlogPostPage({
 
   return (
     <div style={{ background: 'var(--bg-primary)', minHeight: '100vh' }}>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            '@context': 'https://schema.org',
-            '@type': 'BlogPosting',
-            headline: post.title,
-            description: post.description,
-            author: { '@type': 'Organization', name: 'RelancePro', url: 'https://relancepro.fr' },
-            publisher: { '@type': 'Organization', name: 'RelancePro', url: 'https://relancepro.fr' },
-            datePublished: new Date().toISOString(),
-            mainEntityOfPage: { '@type': 'WebPage', '@id': `https://relancepro.fr/blog/${post.slug}` },
-            keywords: post.keywords.join(', '),
-          })
-        }}
-      />
+      <JsonLd data={{
+        '@context': 'https://schema.org',
+        '@type': 'Article',
+        '@id': `${SITE_URL}/blog/${slug}#article`,
+        headline: post.title,
+        description: post.description,
+        image: {
+          '@type': 'ImageObject',
+          url: `${SITE_URL}/api/og?title=${encodeURIComponent(post.title)}&category=${encodeURIComponent(post.category)}`,
+          width: 1200,
+          height: 630,
+        },
+        datePublished: new Date().toISOString(),
+        dateModified: new Date().toISOString(),
+        author: { '@type': 'Organization', name: 'RelancePro', url: SITE_URL },
+        publisher: {
+          '@type': 'Organization',
+          '@id': `${SITE_URL}/#organization`,
+          name: 'RelancePro',
+          logo: { '@type': 'ImageObject', url: `${SITE_URL}/logo.png` },
+        },
+        mainEntityOfPage: { '@type': 'WebPage', '@id': `${SITE_URL}/blog/${slug}` },
+        articleSection: post.category,
+        keywords: post.keywords.join(', '),
+        inLanguage: 'fr-FR',
+        isPartOf: { '@id': `${SITE_URL}/#website` },
+      }} />
+      <JsonLd data={{
+        '@context': 'https://schema.org',
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Accueil', item: SITE_URL },
+          { '@type': 'ListItem', position: 2, name: 'Blog', item: `${SITE_URL}/blog` },
+          { '@type': 'ListItem', position: 3, name: post.category, item: `${SITE_URL}/blog` },
+          { '@type': 'ListItem', position: 4, name: post.title, item: `${SITE_URL}/blog/${slug}` },
+        ],
+      }} />
       <Navbar />
+
 
       <div style={{ paddingTop: 120, paddingBottom: 80 }}>
         <div style={{ maxWidth: 780, margin: '0 auto', padding: '0 24px' }}>

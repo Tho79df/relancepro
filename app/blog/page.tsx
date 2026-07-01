@@ -4,12 +4,26 @@ import Footer from '@/components/landing/Footer';
 import { blogPosts } from '@/lib/blog-posts';
 import type { Metadata } from 'next';
 
+import { SITE_URL } from '@/lib/metadata';
+
 export const metadata: Metadata = {
-  title: 'Blog RelancePro — Conseils pour gérer vos factures impayées',
+  title: 'Blog — Conseils pour gérer vos factures impayées',
   description:
-    "Articles, guides et modèles pour aider les freelances et auto-entrepreneurs à gérer leurs impayés et relancer leurs clients efficacement.",
-  keywords:
-    'relance facture impayée, modèle relance, délai légal paiement, auto-entrepreneur impayé',
+    'Articles, guides et modèles pour aider les freelances et auto-entrepreneurs à gérer leurs impayés et relancer leurs clients efficacement.',
+  keywords: ['relance facture impayée', 'modèle relance', 'délai légal paiement', 'auto-entrepreneur impayé'],
+  alternates: { canonical: `${SITE_URL}/blog` },
+  openGraph: {
+    type: 'website',
+    url: `${SITE_URL}/blog`,
+    title: 'Blog RelancePro — Conseils pour gérer vos factures impayées',
+    description: 'Articles, guides et modèles pour aider les freelances à gérer leurs impayés.',
+    images: [{ url: `${SITE_URL}/og-image.png`, width: 1200, height: 630 }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Blog RelancePro — Conseils pour gérer vos factures impayées',
+    description: 'Articles, guides et modèles pour aider les freelances à gérer leurs impayés.',
+  },
 };
 
 export default function BlogPage() {

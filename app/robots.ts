@@ -1,4 +1,5 @@
 import { MetadataRoute } from 'next';
+import { SITE_URL } from '@/lib/metadata';
 
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -9,7 +10,7 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ['/dashboard/', '/paywall/', '/api/'],
       },
     ],
-    sitemap: 'https://relancepro.fr/sitemap.xml',
-    host: 'https://relancepro.fr',
+    sitemap: `${SITE_URL}/sitemap.xml`,
+    host: SITE_URL,
   };
 }
